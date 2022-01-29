@@ -1,7 +1,6 @@
 import config as cfg
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import dblquad
 
 
 def get_score(x, y):
@@ -26,7 +25,7 @@ def get_factor(r):
     return factor
 
 
-def get_number(x, y):       # not very clean 
+def get_number(x, y):       
     phi = np.arctan(y/x)
     ang = 18/360*2*np.pi
     if x < 0:
@@ -52,13 +51,7 @@ def prob_density_polar(r, phi):
 
 
 def get_expected_value(event):
-    # global cfg.mu, sigma 
-    print('get_expected_value executed')
-    print(f'EW: {cfg.mu}, Sigma: {cfg.sigma}')
-    # global mu, sigma, radien, numbers
-
     e = 0
-    # Über die gesamte Scheibe und alle Zwischenfelder integrieren  
 
     # integrate bull and single bull
     for i in range(2):
