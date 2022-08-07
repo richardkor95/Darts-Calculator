@@ -27,7 +27,6 @@ def main():
         draw_target(ax, cfg.mu, cfg.sigma)
         plt.show()
 
-
     # check if slider is changed
     Varslider.on_changed(update)
 
@@ -51,7 +50,6 @@ def main():
 
     # update target, when mouse is clicked on board 
     fig.canvas.mpl_connect('button_press_event', onclick)
-
 
     # help functions to handle mouse position on the canvas 
     def join_board(event):
