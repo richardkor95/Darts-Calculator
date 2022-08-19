@@ -1,8 +1,6 @@
 import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
 import numpy as np
 import config as cfg
-from matplotlib.widgets import Slider, Button, RadioButtons
 
 
 def draw_board(ax):
@@ -43,8 +41,8 @@ def draw_board(ax):
         ax.text(xp, yp, num, ha = 'center', va = 'center',color = 'gray', fontsize = 14)
 
 
-def draw_target(ax, mu, sigma):
-    ziel = mpatches.Circle(xy = (mu[0],mu[1]), radius=2*sigma, color = 'yellow', alpha = 0.5)
+def draw_target(ax, mu, sigma, col='yellow'):
+    ziel = mpatches.Circle(xy = (mu[0],mu[1]), radius=2*sigma, color = col, alpha = 0.5)
     ax.add_patch(ziel)
     mitte = mpatches.Circle(xy = (mu[0],mu[1]), radius=2, color = 'blue', alpha = 0.8)
     ax.add_patch(mitte)

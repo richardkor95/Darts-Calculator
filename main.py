@@ -18,7 +18,7 @@ def main():
 
     # create slider 
     ax_var = plt.axes([0.25, 0.1, 0.65, 0.02])
-    Varslider = Slider(ax_var, 'Standardabweichung', 1, 100, valinit = cfg.sigma, valstep = 1)
+    Varslider = Slider(ax_var, 'Standardabweichung', 2, 100, valinit = cfg.sigma, valstep = 1)
 
     # update, if slider is changed
     def update(val):
@@ -33,8 +33,8 @@ def main():
     # calculation button setup 
     btnpos = plt.axes([0.4, 0.025, 0.2, 0.05])
     calc_button = Button(btnpos, 'Erwartungswert')
-    calc_button.on_clicked(get_expected_value)
-
+    e = calc_button.on_clicked(get_expected_value)
+    # print('das hier ist e: ', e)
     # set new target
     def onclick(event):
         if switch:

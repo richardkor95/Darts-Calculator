@@ -1,6 +1,7 @@
 import config as cfg
 import numpy as np
 import matplotlib.pyplot as plt
+import warnings
 
 
 def get_score(x, y):
@@ -65,7 +66,13 @@ def get_expected_value(event):
             phi2 = 18/360*2*np.pi * (k + 1/2) 
             e += adaptiv_integral(prob_density_polar, r1, r2, phi1, phi2)*cfg.numbers[k]*cfg.radien_factor[i]
 
-    print(f'Erwartungswert = {e}') 
+    if e < get_score(*cfg.mu)/cfg.sigma and np.linalg.norm(cfg.mu) < cfg.radius_of_board:
+        warnings.warn("Calculation failed! \n Sigma to small for Adaptive Integration")
+     
+    if event == None:
+        return e
+    else:
+        print(f'Erwartungswert = {e}') 
     
 
 def adaptiv_integral(f, x1, x2, y1, y2, e=1e-5): 
