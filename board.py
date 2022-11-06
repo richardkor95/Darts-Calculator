@@ -17,11 +17,12 @@ class Board:
     dopple_outer = radius_of_board
 
     radien = [0, bullseye, singlebull, triple_inner, triple_outer, dopple_inner, dopple_outer]
-    radien_factor = [2, 1, 1, 3, 1, 2, 0]   # factor for each ring (3 --> triple field)
+    radien_factor = [1, 1, 1, 3, 1, 2, 0]   # factor for each ring (3 --> triple field)
 
     def __init__(self, ev=[0, 0], sigma=10):
-        self.ev = ev            # expected value 
-        self.sigma = sigma      # std
+        self.ev = ev                    # expected value 
+        self.sigma = sigma              # std
+        self.r = np.linalg.norm(ev)     # distance to the center 
         self.switch = False 
 
         # init board 
@@ -97,22 +98,59 @@ class Board:
         if self.switch:
             ix, iy = event.xdata, event.ydata
             self.ev = [event.xdata, event.ydata]
+            self.r = np.linalg.norm(self.ev)
             print('x = ',ix, ' y = ', iy)
 
             # score = get_score(ix, iy)
             # print('Geworfen: ',score)
             self.update_screen()
+            print(self.get_score())
             plt.show()
 
     def join_board(self, event):
         if event.inaxes == self.ax:
             self.switch = True
-            print('joined')
     
     def leave_board(self, event):
         if event.inaxes == self.ax:
             self.switch = False
-            print('left')
+
+    def get_score(self):
+        return self.get_number()*self.get_factor()
+    
+    def get_factor(self):
+        for k in range(len(self.radien)):
+            if self.r > self.radien[k] and self.r < self.radien[k+1]:
+                factor = self.radien_factor[k]
+                break
+        return factor
+
+    def get_number(self):
+        x, y = self.ev
+        if self.r <= self.radien[1]:
+            num = 50 
+        elif self.r > self.radien[1] and self.r < self.radien[2]:
+            num = 25
+        elif self.r > self.radien[-1]:
+            num = 0
+        else:
+            phi = np.arctan(y/x)
+            ang = 18/360*2*np.pi
+            if x < 0:
+                phi += np.pi 
+            else:
+                if y < 0:
+                    phi += 2*np.pi
+            # print(phi)
+            for i in range(20):
+                ang1 = ang*(i-1/2)
+                ang2 = ang*(i+1/2)
+                num = 6  # to define the first value 
+                if phi > ang1 and phi < ang2:
+                    num = self.numbers[i]
+                    break
+        return num
+
 
     def test(self):
         pass
@@ -121,3 +159,4 @@ class Board:
 if __name__ == "__main__":
     b = Board(ev=[0, 100])
     b.update_screen()
+
