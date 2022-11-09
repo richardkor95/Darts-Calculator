@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
+import warnings
 from matplotlib.widgets import Slider, Button, RadioButtons
+from maths import adaptiv_integral
 
 class Board:
 
@@ -17,12 +19,12 @@ class Board:
     dopple_outer = radius_of_board
 
     radien = [0, bullseye, singlebull, triple_inner, triple_outer, dopple_inner, dopple_outer]
-    radien_factor = [1, 1, 1, 3, 1, 2, 0]   # factor for each ring (3 --> triple field)
+    radien_factor = [2, 1, 1, 3, 1, 2, 0]   # factor for each ring (3 --> triple field)
 
-    def __init__(self, ev=[0, 0], sigma=10):
-        self.ev = ev                    # expected value 
+    def __init__(self, target=[0, 0], sigma=10):
+        self.target = target                    # expected value 
         self.sigma = sigma              # std
-        self.r = np.linalg.norm(ev)     # distance to the center 
+        self.r = np.linalg.norm(target)     # distance to the center 
         self.switch = False 
 
         # init board 
@@ -40,7 +42,7 @@ class Board:
         # init button 
         btnpos = plt.axes([0.25, 0.025, 0.65, 0.05])
         self.button = Button(btnpos, 'Calculate expected value')
-        self.button.on_clicked(self.button_pressed)
+        self.button.on_clicked(self.get_ev)
 
         self.fig.canvas.mpl_connect('button_press_event', self.onclick)
         self.fig.canvas.mpl_connect('axes_leave_event', self.leave_board)
@@ -89,9 +91,9 @@ class Board:
         plt.show()
     
     def draw_target(self, col='yellow'):
-        ziel = mpatches.Circle(xy = (self.ev[0],self.ev[1]), radius=2*self.sigma, color = col, alpha = 0.5)
+        ziel = mpatches.Circle(xy = (self.target[0],self.target[1]), radius=2*self.sigma, color = col, alpha = 0.5)
         self.ax.add_patch(ziel)
-        mitte = mpatches.Circle(xy = (self.ev[0],self.ev[1]), radius=2, color = 'blue', alpha = 0.8)
+        mitte = mpatches.Circle(xy = (self.target[0],self.target[1]), radius=2, color = 'blue', alpha = 0.8)
         self.ax.add_patch(mitte)
 
     def update_slider(self, val):
@@ -102,8 +104,8 @@ class Board:
     def onclick(self, event):
         if self.switch:
             ix, iy = event.xdata, event.ydata
-            self.ev = [event.xdata, event.ydata]
-            self.r = np.linalg.norm(self.ev)
+            self.target = [event.xdata, event.ydata]
+            self.r = np.linalg.norm(self.target)
             print('x = ',ix, ' y = ', iy)
 
             # score = get_score(ix, iy)
@@ -131,15 +133,16 @@ class Board:
         return factor
 
     def get_number(self):
-        x, y = self.ev
-        if self.r <= self.radien[1]:
-            num = 50 
-        elif self.r > self.radien[1] and self.r < self.radien[2]:
+        x, y = self.target
+        if self.r <= self.radien[2]:
             num = 25
         elif self.r > self.radien[-1]:
             num = 0
         else:
-            phi = np.arctan(y/x)
+            try:
+                phi = np.arctan(y/x)
+            except ZeroDivisionError:
+                phi = np.sign(y)*np.pi/2
             ang = 18/360*2*np.pi
             if x < 0:
                 phi += np.pi 
@@ -155,14 +158,37 @@ class Board:
                     break
         return num
 
-    def button_pressed(self, event):
-        print('button pressed')
+    def get_ev(self, event=None):
+        e = 0
+        # integrate bull and single bull
+        for i in range(2):
+                e += adaptiv_integral(self.prob_density_polar, self.radien[i], self.radien[i+1], 0, 2*np.pi)*25*self.radien_factor[i]
 
-    def test(self):
-        pass
+        # integrate the rest
+        for i in range(2, len(self.radien)-1):
+            r1 = self.radien[i]
+            r2 = self.radien[i+1]
+            for k in range(20):
+                phi1 = 18/360*2*np.pi * (k - 1/2) 
+                phi2 = 18/360*2*np.pi * (k + 1/2) 
+                e += adaptiv_integral(self.prob_density_polar, r1, r2, phi1, phi2)*self.numbers[k]*self.radien_factor[i]
 
+        if e < self.get_score()/self.sigma and np.linalg.norm(self.target) < self.radius_of_board:
+            warnings.warn("Calculation failed! \n Sigma to small for Adaptive Integration")
+        if event == None:
+            return e
+        else:
+            print(f'Erwartungswert = {e}') 
+
+    # vielleicht noch überarbeiten 
+    def prob_density_polar(self, r, phi):
+        factor = r/(2*np.pi*self.sigma**2)
+        ev = (np.cos(phi)*r - self.target[0])**2 + (np.sin(phi)*r - self.target[1])**2
+        return factor*np.exp(-ev/(2*self.sigma**2))
+    
 
 if __name__ == "__main__":
-    b = Board(ev=[0, 100])
+    b = Board(target=[0, 100])
     b.update_screen()
+    print(b.get_ev())
 
