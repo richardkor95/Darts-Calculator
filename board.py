@@ -37,6 +37,11 @@ class Board:
         self.std_slider = Slider(ax_std, 'Standardabweichung', 2, 100, valinit = self.sigma, valstep = 1)
         self.std_slider.on_changed(self.update_slider)
 
+        # init button 
+        btnpos = plt.axes([0.25, 0.025, 0.65, 0.05])
+        self.button = Button(btnpos, 'Calculate expected value')
+        self.button.on_clicked(self.button_pressed)
+
         self.fig.canvas.mpl_connect('button_press_event', self.onclick)
         self.fig.canvas.mpl_connect('axes_leave_event', self.leave_board)
         self.fig.canvas.mpl_connect('axes_enter_event', self.join_board)
@@ -141,7 +146,6 @@ class Board:
             else:
                 if y < 0:
                     phi += 2*np.pi
-            # print(phi)
             for i in range(20):
                 ang1 = ang*(i-1/2)
                 ang2 = ang*(i+1/2)
@@ -151,6 +155,8 @@ class Board:
                     break
         return num
 
+    def button_pressed(self, event):
+        print('button pressed')
 
     def test(self):
         pass
