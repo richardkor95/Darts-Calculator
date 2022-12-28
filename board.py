@@ -25,6 +25,92 @@ class Board:
         self.target = target                    # expected value 
         self.sigma = sigma              # std
         self.r = np.linalg.norm(target)     # distance to the center 
+
+    def get_score(self):
+        return self.get_number()*self.get_factor()
+    
+    def get_factor(self):
+        for k in range(len(self.radien) - 1):
+            if self.r > self.radien[k] and self.r < self.radien[k+1]:
+                factor = self.radien_factor[k]
+                break
+        return factor
+
+    def get_number(self):
+        x, y = self.target
+        if self.r <= self.radien[2]:
+            num = 25
+        elif self.r > self.radien[-1]:
+            num = 0
+        else:
+            try:
+                phi = np.arctan(y/x)
+            except ZeroDivisionError:
+                phi = np.sign(y)*np.pi/2
+            ang = 18/360*2*np.pi
+            if x < 0:
+                phi += np.pi 
+            else:
+                if y < 0:
+                    phi += 2*np.pi
+            for i in range(20):
+                ang1 = ang*(i-1/2)
+                ang2 = ang*(i+1/2)
+                num = 6  # to define the first value 
+                if phi > ang1 and phi < ang2:
+                    num = self.numbers[i]
+                    break
+        return num
+
+    def get_ev(self, event=None):
+        e = 0
+        # integrate bull and single bull
+        for i in range(2):
+                e += adaptiv_integral(self.prob_density_polar, self.radien[i], self.radien[i+1], 0, 2*np.pi)*25*self.radien_factor[i]
+
+        # integrate the rest
+        for i in range(2, len(self.radien)-1):
+            r1 = self.radien[i]
+            r2 = self.radien[i+1]
+            for k in range(20):
+                phi1 = 18/360*2*np.pi * (k - 1/2) 
+                phi2 = 18/360*2*np.pi * (k + 1/2) 
+                e += adaptiv_integral(self.prob_density_polar, r1, r2, phi1, phi2)*self.numbers[k]*self.radien_factor[i]
+
+        if e < self.get_score()/self.sigma and np.linalg.norm(self.target) < self.radius_of_board:
+            warnings.warn("Calculation failed! \n Sigma to small for Adaptive Integration")
+        if event == None:
+            return e
+        else:
+            print(f'Erwartungswert = {e}') 
+
+    # vielleicht noch überarbeiten 
+    def prob_density_polar(self, r, phi):
+        factor = r/(2*np.pi*self.sigma**2)
+        ev = (np.cos(phi)*r - self.target[0])**2 + (np.sin(phi)*r - self.target[1])**2
+        return factor*np.exp(-ev/(2*self.sigma**2))
+
+
+class GuiBoard:
+
+    numbers = [6, 13, 4, 18, 1, 20, 5, 12, 9, 14, 11, 8, 16, 7, 19, 3, 17, 2, 15, 10]
+
+    # lenght of radien
+    radius_of_board = 170
+    bullseye = 6.35
+    singlebull = 15.9
+    triple_inner = 99
+    triple_outer = 107
+    dopple_inner = 162
+    dopple_outer = radius_of_board
+
+    radien = [0, bullseye, singlebull, triple_inner, triple_outer, dopple_inner, dopple_outer]
+    radien_factor = [2, 1, 1, 3, 1, 2, 0]   # factor for each ring (3 --> triple field)
+
+    def __init__(self, target=[0, 0], sigma=10):
+        self.target = target                    # expected value 
+        self.sigma = sigma              # std
+        self.r = np.linalg.norm(target)     # distance to the center 
         self.switch = False 
 
         # init board 
@@ -108,8 +194,6 @@ class Board:
             self.r = np.linalg.norm(self.target)
             print('x = ',ix, ' y = ', iy)
 
-            # score = get_score(ix, iy)
-            # print('Geworfen: ',score)
             self.update_screen()
             print(self.get_score())
             plt.show()
@@ -126,7 +210,7 @@ class Board:
         return self.get_number()*self.get_factor()
     
     def get_factor(self):
-        for k in range(len(self.radien)):
+        for k in range(len(self.radien) - 1):
             if self.r > self.radien[k] and self.r < self.radien[k+1]:
                 factor = self.radien_factor[k]
                 break
@@ -185,10 +269,10 @@ class Board:
         factor = r/(2*np.pi*self.sigma**2)
         ev = (np.cos(phi)*r - self.target[0])**2 + (np.sin(phi)*r - self.target[1])**2
         return factor*np.exp(-ev/(2*self.sigma**2))
-    
+
 
 if __name__ == "__main__":
-    b = Board(target=[0, 100])
+    # b = Board(target=[0, 100])
+    b = GuiBoard(target=[0, 100])
     b.update_screen()
-    print(b.get_ev())
 
